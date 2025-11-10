@@ -14,6 +14,7 @@ func main() {
 	}
 	addRatings(rating, "Vignesh", 4.5, "Great product")
 	addRatings(rating, "Arjun", 3.5, "Worst product")
+	addRatings(rating, "Sahil", 3, "Worst product")
 	fmt.Println(rating)
 }
 

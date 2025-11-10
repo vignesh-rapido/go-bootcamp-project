@@ -15,6 +15,7 @@ type Rating struct {
 	ProductId     string
 	averageRating float64
 	Ratings       []UserRating
+	totalRating   float64
 }
 
 func (rating Rating) String() string {
@@ -31,6 +32,7 @@ func (r *Rating) AddRatings(userName string, rating float64, comment string) err
 		return fmt.Errorf("Not a valid rating : %v", rating)
 	}
 	r.Ratings = append(r.Ratings, UserRating{userName: userName, rating: rating, comments: Comment{comment: comment, date: time.Now()}})
-	r.averageRating = (r.averageRating + rating) / float64(len(r.Ratings))
+	r.totalRating += rating
+	r.averageRating = r.totalRating / float64(len(r.Ratings))
 	return nil
 }
