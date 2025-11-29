@@ -1,29 +1,73 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/fatih/color"
-	"practise/rating"
+	"sync"
+	"time"
 )
 
-func main() {
-
-	color.Green("Welcome to the rating app")
-	rating := &rating.Rating{
-		ProductId: "Apple Iphone",
+func mains() {
+	urls := []string{
+		"https://gdg.community.dev/gdg-cochin/",
+		"https://golang.org",
+		"https://httpstat.us/500",
+		"https://www.google.com/",
+		"https://www.facebook.com/",
+		"https://www.twitter.com/",
+		"https://www.instagram.com/",
+		"https://site-not-present.io",
+		"https://www.youtube.com/",
+		"https://www.linkedin.com/",
+		"https://www.github.com/",
+		"https://www.stackoverflow.com/",
+		"https://www.reddit.com/",
 	}
-	addRatings(rating, "Vignesh", 4.5, "Great product")
-	addRatings(rating, "Arjun", 3.5, "Worst product")
-	addRatings(rating, "Sahil", 3, "Worst product")
-	fmt.Println(rating)
-}
 
-func addRatings(r *rating.Rating, userName string, rating float64, comment string) {
+	const batchSize = 10
+	var wg sync.WaitGroup
 
-	e := r.AddRatings(userName, rating, comment)
-	if e != nil {
-		fmt.Println("Error adding rating:", e)
+	// Create a context with 5 second timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	defer cancel()
+
+	results := make(chan Result, len(urls))
+	jobs := make(chan string)
+	wg.Add(batchSize)
+
+	for i := 0; i < batchSize; i++ {
+		go func() {
+			defer wg.Done()
+			for url := range jobs {
+				healthCheck(ctx, url, results)
+			}
+
+		}()
+	}
+
+	go func() {
+		for _, url := range urls {
+			jobs <- url
+		}
+		close(jobs)
+	}()
+
+	go func() {
+		for res := range results {
+			printer(res)
+		}
+	}()
+
+	wg.Wait()
+	close(results)
+
+	println("All goroutines completed!")
+
+	if ctx.Err() != nil {
+		fmt.Println("\nTimeout occurred!")
 	} else {
-		fmt.Printf("Rating added successfully for user:%s\n", userName)
+		fmt.Println("\nAll health checks completed!")
 	}
+
 }
